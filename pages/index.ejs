@@ -1,0 +1,31 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+</head>
+<body>
+  <h1><%= title %></h1>
+    <form action="/" method="POST">
+        <input type="text" name="note" placeholder="Your note" required>
+        <button type="submit">Submit</button>
+    </form>
+    <div class="Card">
+      <% if (created) { %>
+        <h2>Note created successfully</h2>
+      <% } %>
+      <% notes.forEach((note) => { %>
+        <div class="note-card">
+          <h2><%= note.title %></h2>
+          <p><%= note.id %></p>
+          <button data-type="removeById" data-id="<%= note.id %>">Delete</button>
+          <button data-type="editById" data-id="<%= note.id %>">Edit</button>
+        </div>
+      <% }) %>
+    </div>  
+    <script src="/app.js"></script>
+</body>
+</html>
+

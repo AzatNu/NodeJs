@@ -1,38 +1,67 @@
-const yargs = require("yargs");
-const { addNote, getNote, removeNoteById } = require("./notes.controller");
+
+const path = require("path");
+const express = require("express");
 const chalk = require("chalk");
-yargs.command({
-  command: "add",
-  describe: "Add new note to list",
-  builder: {
-    title: {
-      type: "string",
-      describe: "Note title",
-      demandOption: true,
-    },
-  },
-  handler({ title }) {
-    addNote(title);
-  },
+const { addNote, getNote, removeNoteById, editById  } = require("./notes.controller");
+
+
+const port = 3000;
+const app = express();
+
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "pages"));
+app.use(express.static(path.join(__dirname, "public")));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.get("/", async (req, res) => {
+  res.render("index", {
+      title: "Notes App",
+      notes: await getNote(),
+    created: false,
+  });
 });
-yargs.command({
-  command: "remove",
-  describe: "remove note by id",
-  handler({ id }) {
-    removeNoteById(id);
-  },
+
+app.post("/", async (req, res) => {
+  await addNote(req.body.note);
+  res.redirect("/");
+    
+  });
+
+app.delete("/:id", async (req, res) => {
+  await removeNoteById(req.params.id);
+  res.redirect("/"); 
+});
+
+app.put('/:id', async (req, res) => {
+  const id = req.params.id;
+  const newTitle = req.body.title;
+  console.log(id, newTitle);
+
+  try {
+    const notes = await getNote(); 
+    const noteToEdit = notes.find(note => note.id === Number(id));
+
+    if (!noteToEdit) {
+      throw new Error('Заметка не найдена');
+    }
+
+    noteToEdit.title = newTitle;
+    editById(id, newTitle);
+    await fs.writeFile(notePath, JSON.stringify(notes));
+    res.send('Заметка успешно изменена');
+
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      console.log('Файл не найден');
+    } else {
+      console.log(error);
+    }
+    res.status(500).send('Ошибка при изменении заметки');
+  }
 
 });
 
-yargs.command({
-  command: "list",
-  describe: "print all notes",
-  handler: async () => {
-    const notes = await getNote();
-    notes.forEach(note => {
-      console.log(chalk.green(`Title: ${note.title}, ID: ${note.id}`));
-    });
-  },
-});
 
-yargs.parse();
+app.listen(port, () => {
+  console.log(chalk.green(`server is running on port ${port}...`));
+});
